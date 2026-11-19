@@ -508,12 +508,16 @@
   .account-box .ab-label{display:flex;align-items:center;gap:5px;margin:0 0 5px;font-size:10.5px;font-weight:800;color:#A9612A;letter-spacing:-.2px}
   .account-box .ab-label .dot{width:5px;height:5px;border-radius:50%;background:#F2914D}
   .account-box .ab-main{margin:0;font-size:13.5px;font-weight:800;color:#8A4413;letter-spacing:-.35px}
+  .account-box .ab-owner{margin:3px 0 0;font-size:11px;font-weight:700;color:#A2785A;letter-spacing:-.2px}
+  .account-box .ab-owner b{color:#8A4413;font-weight:800}
   .account-box .ab-note{margin:6px 0 0;font-size:10.5px;color:#A2785A;font-weight:600;line-height:1.55;letter-spacing:-.2px}
-  .account-box .ab-edit{
+  .account-box .ab-copy{
     margin-top:9px;display:inline-flex;align-items:center;gap:4px;
-    font-size:10.5px;font-weight:800;color:#B4551A;
-    background:#fff;border:1px solid #F6D5B6;border-radius:7px;padding:4px 8px;
+    font-family:inherit;font-size:10.5px;font-weight:800;color:#B4551A;cursor:pointer;
+    background:#fff;border:1px solid #F6D5B6;border-radius:7px;padding:5px 9px;
+    -webkit-tap-highlight-color:transparent;transition:.14s;
   }
+  .account-box .ab-copy:active{background:#FFF3E6;border-color:#F0BB8D}
 
   .easy-list{display:grid;gap:7px}
   .easy-btn{
@@ -955,9 +959,10 @@
         </div>
         <div class="account-box">
           <p class="ab-label"><span class="dot"></span> 입금 계좌 안내</p>
-          <p class="ab-main" id="acct-main">산골총각 계좌번호가 들어갈 자리</p>
-          <p class="ab-note">주문 접수 후 안내되는 계좌로 24시간 안에 입금해 주세요.<br>입금자명이 주문자명과 다르면 확인이 늦어질 수 있습니다.</p>
-          <span class="ab-edit">✎ 계좌 정보는 시안 확정 후 반영됩니다</span>
+          <p class="ab-main" id="acct-main">카카오뱅크 3333-34-3951839</p>
+          <p class="ab-owner">예금주 <b>시드썸</b></p>
+          <p class="ab-note">주문 접수 후 24시간 안에 위 계좌로 입금해 주세요.<br>입금자명이 주문자명과 다르면 확인이 늦어질 수 있습니다.</p>
+          <button class="ab-copy" type="button" id="btn-copy-acct">계좌번호 복사</button>
         </div>
       </div>
 
@@ -1099,6 +1104,11 @@
   /* 주문을 구글 시트로도 보냅니다 (Apps Script 웹 앱). 실패해도 주문 흐름은 그대로 진행됩니다. */
   var ORDER_API_URL = "https://script.google.com/macros/s/AKfycbyc7y2l8gO3aYNdB6ln5ie4Db8Qj1_AfsqqurCWyRgsny58DyWlAc5XHjZwdvJSjayxRw/exec";
   var ORDER_API_TOKEN = "sangolgchonggak-2026-change-me";
+
+  /* 무통장 입금 계좌 (실제 계좌) */
+  var BANK_NAME = "카카오뱅크";
+  var BANK_NUMBER = "3333-34-3951839";
+  var BANK_OWNER = "시드썸";
 
   var qty = { p5: 0, p10: 0 };
   var payMethod = "bank";
@@ -1274,6 +1284,35 @@
       easyBrand = null;
       document.querySelectorAll(".easy-btn").forEach(function (b) { b.classList.remove("is-on"); });
       $("e-easy").classList.remove("show");
+    }
+  }
+
+  /* ---------- 입금 계좌 복사 ---------- */
+  function copyAccount() {
+    var text = BANK_NUMBER;
+    var ok = function () { toast("계좌번호를 복사했어요 · " + BANK_NAME + " " + text); };
+    var legacy = function () {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        var done = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return done;
+      } catch (err) { return false; }
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, function () {
+        legacy() ? ok() : toast(BANK_NAME + " " + text + " · 예금주 " + BANK_OWNER);
+      });
+    } else {
+      legacy() ? ok() : toast(BANK_NAME + " " + text + " · 예금주 " + BANK_OWNER);
     }
   }
 
@@ -1526,7 +1565,8 @@
       rows.push('<div class="dc-row"><span class="k">요청사항</span><span class="v">' + esc(o.receiver.memo) + "</span></div>");
     }
     if (o.payMethod === "bank") {
-      rows.push('<div class="dc-row"><span class="k">입금자명</span><span class="v">' + esc(o.depositor) + " · 산골총각 계좌로 24시간 내 입금</span></div>");
+      rows.push('<div class="dc-row"><span class="k">입금 계좌</span><span class="v"><b>카카오뱅크 3333-34-3951839</b><br>예금주 시드썸</span></div>');
+      rows.push('<div class="dc-row"><span class="k">입금자명</span><span class="v">' + esc(o.depositor) + " · 24시간 내 입금</span></div>");
     } else {
       rows.push('<div class="dc-row"><span class="k">결제</span><span class="v">' + esc(o.pay) + " 결제창 연결 자리(시안)</span></div>");
     }
@@ -1634,6 +1674,7 @@
     if (!totals().amount) return;
     show("checkout");
   });
+  $("btn-copy-acct").addEventListener("click", copyAccount);
   $("btn-back").addEventListener("click", function () { goBack(); });
   $("btn-history").addEventListener("click", function () { show("history"); });
   $("btn-hist-back").addEventListener("click", function () { goBack(); });
