@@ -590,7 +590,7 @@
   }
   .rev-carousel{position:relative;margin-top:2px}
   .rev-track{
-    display:flex;gap:11px;align-items:stretch;
+    display:flex;gap:16px;align-items:stretch;
     overflow-x:auto;overflow-y:hidden;
     scroll-snap-type:x mandatory;scroll-padding-left:16px;
     padding:2px 16px 10px;
@@ -1529,16 +1529,21 @@
       b.type = "button";
       b.setAttribute("aria-label", (i + 1) + "번째 후기 보기");
       b.addEventListener("click", function () {
-        track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: "smooth" });
+        track.scrollTo({ left: snapLeft(card), behavior: "smooth" });
       });
       dots.appendChild(b);
       return b;
     });
 
+    function snapLeft(card) {
+      var pad = parseFloat(window.getComputedStyle(track).scrollPaddingLeft) || 0;
+      return Math.max(0, card.offsetLeft - track.offsetLeft - pad);
+    }
+
     function nearest() {
       var x = track.scrollLeft, best = 0, bd = Infinity;
       cards.forEach(function (card, i) {
-        var d = Math.abs(card.offsetLeft - track.offsetLeft - x);
+        var d = Math.abs(snapLeft(card) - x);
         if (d < bd) { bd = d; best = i; }
       });
       return best;
