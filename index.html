@@ -1000,6 +1000,10 @@
   var MAX_QTY = 9;
   var STORE_KEY = "sangolgchonggak.orders.v1";
 
+  /* 주문을 구글 시트로도 보냅니다 (Apps Script 웹 앱). 실패해도 주문 흐름은 그대로 진행됩니다. */
+  var ORDER_API_URL = "https://script.google.com/macros/s/AKfycbyc7y2l8gO3aYNdB6ln5ie4Db8Qj1_AfsqqurCWyRgsny58DyWlAc5XHjZwdvJSjayxRw/exec";
+  var ORDER_API_TOKEN = "sangolgchonggak-2026-change-me";
+
   var qty = { p5: 0, p10: 0 };
   var payMethod = "bank";
   var easyBrand = null;
@@ -1264,6 +1268,20 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
   }
 
+  function sendOrderToSheet(order) {
+    if (!ORDER_API_URL) return;
+    try {
+      fetch(ORDER_API_URL, {
+        method: "POST",
+        mode: "no-cors",   // Apps Script 는 CORS 응답 헤더를 주지 않으므로 응답은 읽지 않고 전송만 합니다.
+        // text/plain 이어야 브라우저 사전요청(CORS preflight)이 생기지 않습니다.
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ token: ORDER_API_TOKEN, order: order }),
+        keepalive: true
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function makeOrderNo() {
     var d = new Date();
     var p = function (n) { return (n < 10 ? "0" : "") + n; };
@@ -1316,6 +1334,7 @@
     var all = loadOrders();
     all.unshift(order);
     saveOrders(all);
+    sendOrderToSheet(order);
     renderHistCount();
     renderComplete(order);
     show("complete");
