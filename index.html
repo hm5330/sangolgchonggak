@@ -5,6 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F26A1B">
 <title>산골총각 · 서귀포 타이벡감귤 직송 주문서</title>
+<!-- 다음(카카오) 우편번호·도로명 주소 검색. 로드에 실패해도 주소는 직접 입력할 수 있습니다. -->
+<script>
+(function () {
+  /* 카카오 안내(2026-11-30 daumcdn 종료)에 따라 kakaocdn 을 먼저 쓰고, 실패하면 daumcdn 으로 넘어갑니다. */
+  var SRC = [
+    "https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js",
+    "https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+  ], i = 0;
+  window.__postcodeFailed = false;
+  function next() {
+    if (i >= SRC.length) { window.__postcodeFailed = true; return; }
+    var s = document.createElement("script");
+    s.src = SRC[i++];
+    s.async = true;
+    s.onerror = next;
+    s.onload = function () {
+      if ((window.kakao && window.kakao.Postcode) || (window.daum && window.daum.Postcode)) return;
+      next();
+    };
+    document.head.appendChild(s);
+  }
+  next();
+})();
+</script>
 <style>
   :root{
     --orange:#F2681A;
@@ -401,6 +425,48 @@
   textarea.input{resize:none;min-height:70px;line-height:1.5}
   .err-msg{display:none;margin:5px 0 0;font-size:11px;color:var(--red);font-weight:700;letter-spacing:-.2px}
   .err-msg.show{display:block}
+
+  /* 주소 검색 */
+  .zip-row{display:flex;gap:8px;align-items:stretch}
+  .zip-row .input{flex:0 0 104px;width:auto;padding:12px 8px;text-align:center;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .zip-row .input::placeholder{font-size:12px;letter-spacing:-.2px}
+  .btn-zip{
+    flex:1 1 auto;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    font-family:inherit;font-size:13px;font-weight:800;letter-spacing:-.3px;color:#fff;
+    background:linear-gradient(180deg,var(--orange-2),var(--orange));border:0;border-radius:12px;
+    padding:0 10px;cursor:pointer;box-shadow:0 4px 10px rgba(242,104,26,.22);transition:transform .12s,box-shadow .15s;
+  }
+  .btn-zip:hover{box-shadow:0 6px 14px rgba(242,104,26,.28)}
+  .btn-zip:active{transform:translateY(1px);box-shadow:0 2px 6px rgba(242,104,26,.22)}
+  .btn-zip svg{width:15px;height:15px;flex:0 0 15px}
+  #f-addr{margin-top:8px}
+  .addr-help{margin:6px 0 0;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:-.2px;line-height:1.45}
+  .addr-help b{color:#6F655B;font-weight:800}
+  .addr-help.is-warn{color:#AE5214}
+
+  /* 주소 검색 레이어 */
+  body.no-scroll{overflow:hidden;touch-action:none}
+  .addr-layer{position:fixed;inset:0;z-index:120;display:flex;justify-content:center;background:rgba(34,28,23,.46)}
+  .addr-layer[hidden]{display:none!important}
+  .addr-sheet{display:flex;flex-direction:column;width:100%;max-width:430px;height:100%;background:#fff;overflow:hidden}
+  .addr-sheet-head{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;background:#fff;border-bottom:1px solid var(--line);
+  }
+  .addr-sheet-head strong{font-size:15px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+  .addr-close{
+    width:32px;height:32px;flex:0 0 32px;display:inline-flex;align-items:center;justify-content:center;
+    font-family:inherit;font-size:18px;line-height:1;color:#6F655B;background:#F6F1EA;border:0;border-radius:999px;cursor:pointer;
+  }
+  .addr-close:active{background:#EDE5DB}
+  .addr-frame{position:relative;flex:1 1 auto;min-height:0;background:#fff;overflow:hidden}
+  .addr-frame iframe,.addr-frame>div{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;border:0}
+  .addr-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--muted)}
+  @media (min-width:431px){
+    .addr-layer{padding:24px 0;align-items:center}
+    .addr-sheet{height:88vh;border-radius:16px;box-shadow:0 24px 60px rgba(34,28,23,.28)}
+    .addr-sheet-head{border-radius:16px 16px 0 0}
+  }
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
   .chip{
@@ -828,9 +894,17 @@
       </div>
 
       <div class="field">
-        <label for="f-addr">배송지 주소 <span class="req">*</span></label>
+        <label for="f-zip">배송지 주소 <span class="req">*</span></label>
+        <div class="zip-row">
+          <input class="input" id="f-zip" type="text" inputmode="numeric" maxlength="5" placeholder="우편번호" autocomplete="postal-code" aria-label="우편번호">
+          <button class="btn-zip" type="button" id="btn-zip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4.2-4.2"></path></svg>
+            주소 검색
+          </button>
+        </div>
         <input class="input" id="f-addr" type="text" placeholder="도로명 또는 지번 주소" autocomplete="address-line1">
         <p class="err-msg" id="e-addr">배송지 주소를 입력해 주세요.</p>
+        <p class="addr-help" id="addr-help">도로명 주소는 <b>주소 검색</b>으로 찾으면 우편번호까지 자동으로 입력됩니다.</p>
       </div>
 
       <div class="field">
@@ -987,6 +1061,17 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- 주소 검색 레이어 (다음 우편번호 서비스 임베드) -->
+  <div class="addr-layer" id="addr-layer" hidden>
+    <div class="addr-sheet" role="dialog" aria-modal="true" aria-labelledby="addr-sheet-title">
+      <div class="addr-sheet-head">
+        <strong id="addr-sheet-title">주소 검색</strong>
+        <button class="addr-close" type="button" id="btn-zip-close" aria-label="주소 검색 닫기">✕</button>
+      </div>
+      <div class="addr-frame" id="postcode-layer"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1322,6 +1407,7 @@
       receiver: {
         name: $("f-name").value.trim(),
         phone: formatPhone($("f-phone").value),
+        zipcode: $("f-zip").value.trim(),
         addr: $("f-addr").value.trim(),
         addr2: $("f-addr2").value.trim(),
         memo: $("f-memo").value.trim()
@@ -1350,6 +1436,7 @@
     rows.push('<div class="dc-row"><span class="k">결제 금액</span><span class="v"><b>' + won(o.amount) + "원</b> · " + o.pay + "</span></div>");
     rows.push('<div class="dc-row"><span class="k">받는 분</span><span class="v">' + esc(o.receiver.name) + " · " + esc(o.receiver.phone) + "</span></div>");
     rows.push('<div class="dc-row"><span class="k">배송지</span><span class="v">' +
+      (o.receiver.zipcode ? "[" + esc(o.receiver.zipcode) + "] " : "") +
       esc(o.receiver.addr) + (o.receiver.addr2 ? " " + esc(o.receiver.addr2) : "") + "</span></div>");
     if (o.receiver.memo) {
       rows.push('<div class="dc-row"><span class="k">요청사항</span><span class="v">' + esc(o.receiver.memo) + "</span></div>");
@@ -1472,6 +1559,7 @@
     renderMain();
     $("f-name").value = "";
     $("f-phone").value = "";
+    $("f-zip").value = "";
     $("f-addr").value = "";
     $("f-addr2").value = "";
     $("f-memo").value = "";
@@ -1479,6 +1567,8 @@
     $("f-agree").checked = false;
     choosePay("bank");
     clearErrors();
+    closePostcode();
+    setAddrHelp("", false);
     show("main");
   });
 
@@ -1516,6 +1606,85 @@
   ["f-name", "f-phone", "f-addr", "f-depositor"].forEach(function (id) {
     var el = $(id);
     el.addEventListener("input", function () { el.classList.remove("err"); });
+  });
+
+  /* ---------- 도로명 주소 검색 (다음 우편번호 서비스) ---------- */
+  var ADDR_HELP_NORMAL = "도로명 주소는 <b>주소 검색</b>으로 찾으면 우편번호까지 자동으로 입력됩니다.";
+  var ADDR_HELP_FAIL = "주소 검색을 불러오지 못했습니다. 우편번호와 주소를 직접 입력하실 수 있습니다.";
+
+  function postcodeNs() {
+    if (window.kakao && window.kakao.Postcode) return window.kakao;
+    if (window.daum && window.daum.Postcode) return window.daum;
+    return null;
+  }
+
+  function setAddrHelp(html, warn) {
+    var el = $("addr-help");
+    if (!el) return;
+    el.innerHTML = html || ADDR_HELP_NORMAL;
+    el.classList.toggle("is-warn", !!warn);
+  }
+
+  function closePostcode() {
+    var layer = $("addr-layer");
+    if (!layer || layer.hidden) return;
+    layer.hidden = true;
+    document.body.classList.remove("no-scroll");
+    $("postcode-layer").innerHTML = "";
+  }
+
+  function openPostcode() {
+    var ns = postcodeNs();
+    if (!ns) {
+      var failed = !!window.__postcodeFailed;
+      toast(failed ? "주소 검색을 불러오지 못했어요 · 주소를 직접 입력해 주세요" : "주소 검색을 준비 중이에요 · 잠시 후 다시 눌러 주세요");
+      setAddrHelp(failed ? ADDR_HELP_FAIL : "주소 검색을 준비 중입니다. 잠시 후 다시 눌러 주세요.", true);
+      $("f-addr").focus();
+      return;
+    }
+    var box = $("postcode-layer");
+    box.innerHTML = "";
+    $("addr-layer").hidden = false;
+    document.body.classList.add("no-scroll");
+    try {
+      new ns.Postcode({
+        width: "100%",
+        height: "100%",
+        oncomplete: function (data) {
+          var base = (data.userSelectedType === "J")
+            ? (data.jibunAddress || data.address || data.roadAddress || "")
+            : (data.roadAddress || data.address || data.jibunAddress || "");
+          if (data.zonecode) $("f-zip").value = data.zonecode;
+          $("f-addr").value = base;
+          $("f-addr").classList.remove("err");
+          $("e-addr").classList.remove("show");
+          setAddrHelp("", false);
+          closePostcode();
+          var a2 = $("f-addr2");
+          a2.focus();
+          try { a2.setSelectionRange(a2.value.length, a2.value.length); } catch (e) {}
+          toast("주소를 입력했습니다 · 상세 주소를 적어 주세요");
+        },
+        onclose: function () { closePostcode(); }
+      }).embed(box);
+    } catch (e) {
+      closePostcode();
+      setAddrHelp(ADDR_HELP_FAIL, true);
+      toast("주소를 직접 입력해 주세요");
+      $("f-addr").focus();
+    }
+  }
+
+  $("btn-zip").addEventListener("click", openPostcode);
+  $("btn-zip-close").addEventListener("click", closePostcode);
+  $("addr-layer").addEventListener("click", function (e) {
+    if (e.target === this) closePostcode();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" || e.key === "Esc") closePostcode();
+  });
+  window.addEventListener("load", function () {
+    if (!postcodeNs() && window.__postcodeFailed) setAddrHelp(ADDR_HELP_FAIL, true);
   });
 
   $("btn-submit").addEventListener("click", function () {
