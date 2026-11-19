@@ -598,6 +598,8 @@
     scrollbar-width:none;
   }
   .rev-track::-webkit-scrollbar{display:none}
+  /* 마지막 카드도 왼쪽 정렬되도록 뒤에 여백을 둔다 */
+  .rev-track::after{content:"";flex:0 0 22%}
   .rev-card{
     flex:0 0 78%;max-width:320px;min-width:0;
     scroll-snap-align:start;
