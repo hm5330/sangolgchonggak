@@ -540,6 +540,8 @@
   }
   .agree input{width:16px;height:16px;margin:1px 0 0;accent-color:var(--orange);flex:0 0 auto}
   .agree b{color:var(--ink-2);font-weight:800}
+  .agree-opt{margin-top:9px;font-size:11px;color:#8A8176}
+  .agree-opt input{width:15px;height:15px}
   .demo-note{
     margin:12px 16px 0;padding:10px 12px;border-radius:11px;
     background:#F1F0EE;border:1px solid #E6E2DC;
@@ -974,6 +976,11 @@
     <label class="agree">
       <input type="checkbox" id="f-agree">
       <span>주문 내용과 <b>교환·환불 안내</b>를 확인했으며, 이에 동의합니다.</span>
+    </label>
+
+    <label class="agree agree-opt">
+      <input type="checkbox" id="f-mkt">
+      <span>[선택] 신상품·할인 소식 받기 (문자/알림)</span>
     </label>
   </section>
 
@@ -1483,6 +1490,7 @@
       pay: payLabel(),
       payMethod: payMethod,
       depositor: payMethod === "bank" ? $("f-depositor").value.trim() : "",
+      marketingAgree: Boolean($("f-mkt").checked),
       status: "접수"
     };
     var all = loadOrders();
@@ -1634,6 +1642,7 @@
     $("f-memo").value = "";
     $("f-depositor").value = "";
     $("f-agree").checked = false;
+    $("f-mkt").checked = false;
     choosePay("bank");
     clearErrors();
     closePostcode();
